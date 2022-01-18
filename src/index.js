@@ -37,7 +37,7 @@ function onClickLoadMore () {
   getDataFromServer(inputValue, page).then(data =>{
     createMarkup(data)
     refs.galleryDiv.insertAdjacentHTML('beforeend',createMarkup(data));
-    if(data.data.totalHits + 40 <= iterator){
+    if(data.data.totalHits  <= iterator){
       refs.btnLoadMore.style.display = 'none'
       Notiflix.Notify.info("We're sorry, but you've reached the end of search results.")
     }
