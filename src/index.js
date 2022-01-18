@@ -1,44 +1,69 @@
 import './sass/main.scss';
+import Notiflix from 'notiflix';
 import getDataFromServer from './getPhotos';
 const refs = { 
     btn: document.querySelector('.btn-sub'),
     input: document.querySelector('.input-search'),
     form: document.querySelector('#search-form'),
-    galleryDiv: document.querySelector('.gallery')
+    galleryDiv: document.querySelector('.gallery'),
+    btnLoadMore: document.querySelector('.load-more')
 }
+let page = 1;
+let iterator = 0;
+let inputValue = '';
 refs.form.addEventListener('submit', onBtnClick)
+refs.btnLoadMore.addEventListener('click',onClickLoadMore)
 
 function onBtnClick(e){
 e.preventDefault()
-const inputValue = refs.input.value;
-console.log(refs.input.value)
+refs.galleryDiv.innerHTML = '';
+ inputValue = refs.form.elements.searchQuery.value;
+refs.btnLoadMore.style.display = 'inline-block';
+
 getDataFromServer(inputValue).then(data=>{
-// console.log(data)
+  Notiflix.Notify.success(`Hooray! We found ${data.data.totalHits} images.`)
+  if(data.data.hits.length === 0){
+    refs.btnLoadMore.style.display = 'none'
+    return Notiflix.Notify.failure("Sorry, there are no images matching your search query. Please try again.")
+  }
+  iterator = 40;
  refs.galleryDiv.insertAdjacentHTML('afterbegin',createMarkup(data));
 }).catch(console.log);
 
 }
+function onClickLoadMore () {
+  page+= 1;
+  iterator+=40;
+  getDataFromServer(inputValue, page).then(data =>{
+    createMarkup(data)
+    refs.galleryDiv.insertAdjacentHTML('beforeend',createMarkup(data));
+    if(data.data.totalHits + 40 <= iterator){
+      refs.btnLoadMore.style.display = 'none'
+      Notiflix.Notify.info("We're sorry, but you've reached the end of search results.")
+    }
+  });
+} 
 
-function createMarkup(data){
+function createMarkup({data:{hits}}){
    
-    return data.data.hits.map(item => `<div class="photo-card">
+    return hits.map(item => `<div class="photo-card">
     <img src="${item.webformatURL}" alt="" loading="lazy" />
     <div class="info">
       <p class="info-item">
         <b>Likes</b>
-        ${item.likes}
+        <br>${item.likes}</br>
       </p>
       <p class="info-item">
         <b>Views</b>
-        ${item.views}
+        <br>${item.views}</br>
       </p>
       <p class="info-item">
         <b>Comments</b>
-        ${item.comments}
+        <br>${item.comments}</br>
       </p>
       <p class="info-item">
         <b>Downloads</b>
-        ${item.downloads}
+        <br>${item.downloads}</br>
       </p>
     </div>
   </div>`).join("")
